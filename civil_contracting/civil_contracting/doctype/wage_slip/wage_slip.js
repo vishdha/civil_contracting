@@ -52,7 +52,7 @@ frappe.ui.form.on("Wage Slip", "get_outstanding_wages", function(frm) {
 	});
 });
 
-calculate_totals = function(doc) {
+cur_frm.cscript.calculate_totals = function(doc) {
 	var allocation = doc.payment_allocation || [];
 	doc.total_os_wages = 0.0;
 	doc.total_payment = 0.0;
@@ -67,16 +67,16 @@ calculate_totals = function(doc) {
 cur_frm.cscript.refresh = function(doc, dt, dn) {
 	if(!doc.__islocal) {
 		if(doc.docstatus==1 && frappe.model.can_create("Journal Entry")){
-    		cur_frm.add_custom_button(__("Make Journal Entry"), make_journal_entry);
+    		cur_frm.add_custom_button(__("Make Journal Entry"), cur_frm.cscript.make_journal_entry);
     	}
     }
-    calculate_totals(doc);
+    cur_frm.cscript.calculate_totals(doc);
 }
 
-make_journal_entry = function() {
+cur_frm.cscript.make_journal_entry = function() {
 
 	var me = this;
-
+	let voucher_type = ""
 	if(cur_frm.doc.mode_of_payment === "Cash") {
 		voucher_type = "Cash Entry";
 	}
@@ -87,7 +87,7 @@ make_journal_entry = function() {
 		method: "erpnext.accounts.doctype.journal_entry.journal_entry.get_default_bank_cash_account",
 		args: {
 			"company": cur_frm.doc.company,
-			"voucher_type": voucher_type
+			"account_type": voucher_type
 		},
 		callback: function(r) {
 			var jv = frappe.model.make_new_doc_and_get_name('Journal Entry');
@@ -108,7 +108,10 @@ make_journal_entry = function() {
 				d2.account = r.message.account;
 				d2.balance = r.message.balance;
 			}
-			loaddoc('Journal Entry', jv.name);
+			frappe.route_options = {
+				'reference_name': jv.name
+			};
+			frappe.set_route("Form", "Journal Entry", jv.name);	
 		}
 	});
 }

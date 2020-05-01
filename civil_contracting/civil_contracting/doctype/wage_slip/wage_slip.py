@@ -34,7 +34,7 @@ class WageSlip(Document):
 				frappe.set_value("Worker", payment.worker, "outstanding_wages", os_wages)
 
 @frappe.whitelist()
-def get_os_wg(supplier, project=""):
+def get_os_wg(supplier=None, project=None):
 	if supplier and project:
 		return frappe.db.sql("""select name, employee_name, outstanding_wages, workstation, project, supplier
 			from `tabWorker` where project = %(project)s or supplier = %(supplier)s""", {"project":frappe.db.escape(project),"supplier":frappe.db.escape(supplier)}, as_dict=1)

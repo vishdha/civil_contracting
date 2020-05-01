@@ -53,7 +53,7 @@ cur_frm.add_fetch("worker_name", "workstation", "workstation");
 cur_frm.add_fetch("worker_name", "hour_rate", "rate");
 cur_frm.add_fetch("workstation", "hour_rate", "rate");
 
-calculate_totals = function(doc) {
+cur_frm.cscript.calculate_totals = function(doc) {
 	var attendance = doc.worker_attendance || [];
 	doc.total_wages = 0.0;
 	doc.outstanding_wages = 0.0;
@@ -66,7 +66,7 @@ calculate_totals = function(doc) {
 			daily_wages = flt(flt(attendance[i].rate) * flt(attendance[i].hours), 2);
 			doc.daily_wages += daily_wages;
 		}
-		total_wages = flt(flt(attendance[i].rate) * flt(attendance[i].hours), 2);
+		let total_wages = flt(flt(attendance[i].rate) * flt(attendance[i].hours), 2);
 		doc.total_wages += total_wages;
 	}
 	doc.outstanding_wages = flt(flt(doc.total_wages) - flt(doc.daily_wages));
@@ -76,7 +76,7 @@ calculate_totals = function(doc) {
 }
 
 // if "hours" are not entered in Attendance Row, "working_hours" will be copied
-add_working_hours = function(doc) {
+cur_frm.cscript.add_working_hours = function(doc) {
 	var attendance = doc.worker_attendance || [];
 	for(var i=0;i<attendance.length;i++) {
 		if (!attendance[i].hours){
@@ -86,7 +86,7 @@ add_working_hours = function(doc) {
 	refresh_field('hours');
 }
 
-make_journal_entry = function() {
+cur_frm.cscript.make_journal_entry = function() {
 
 	var me = this;
 
@@ -141,7 +141,10 @@ make_journal_entry = function() {
 				d4.credit_in_account_currency = cur_frm.doc.outstanding_wages;
 				d4.account = os_wages_account;
 			}
-			loaddoc('Journal Entry', jv.name);
+			frappe.route_options = {
+				'reference_name': jv.name
+			};
+			frappe.set_route("Form", "Journal Entry", jv.name);
 		}
 	});
 }
@@ -153,9 +156,9 @@ cur_frm.cscript.validate = function(doc, dt, dn) {
 cur_frm.cscript.refresh = function(doc, dt, dn) {
 	if(!doc.__islocal) {
 		if(doc.docstatus==1 && frappe.model.can_create("Journal Entry")){
-    		cur_frm.add_custom_button(__("Make Journal Entry"), make_journal_entry, __("Make"));
+    		cur_frm.add_custom_button(__("Make Journal Entry"), cur_frm.cscript.make_journal_entry, __("Make"));
     	}
     }
-    calculate_totals(doc);
-    add_working_hours(doc);
+    cur_frm.cscript.calculate_totals(doc);
+    cur_frm.cscript.add_working_hours(doc);
 }
